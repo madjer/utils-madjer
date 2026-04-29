@@ -1,93 +1,187 @@
 import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  PoPageModule, PoButtonModule, PoRadioGroupModule,
-  PoContainerModule, PoDividerModule, PoNotificationService,
-  PoRadioGroupOption, PoFieldModule
-} from '@po-ui/ng-components';
 
 type CnpjMode = 'normal' | 'alfanumerico';
 
 @Component({
   selector: 'app-cnpj-generator',
   standalone: true,
-  imports: [FormsModule, PoPageModule, PoButtonModule, PoRadioGroupModule, PoContainerModule, PoDividerModule, PoFieldModule],
-  providers: [PoNotificationService],
+  imports: [CommonModule, FormsModule],
   template: `
-    <po-page-default p-title="Gerador de CNPJ">
-      <p class="page-subtitle">Gera CNPJs válidos para uso em testes e ambientes de desenvolvimento.</p>
+    <div class="page-header">
+      <h1>Gerador de CNPJ</h1>
+      <p>Gera CNPJs válidos para uso em testes e ambientes de desenvolvimento.</p>
+    </div>
 
-      <po-container>
-        <div class="options-row">
-          <po-radio-group p-label="Tipo de CNPJ" [p-options]="modeOptions"
-            [ngModel]="mode()" (ngModelChange)="mode.set($event)" [p-columns]="2">
-          </po-radio-group>
-          <po-radio-group p-label="Formato" [p-options]="maskOptions"
-            [ngModel]="withMask()" (ngModelChange)="withMask.set($event)" [p-columns]="2">
-          </po-radio-group>
+    <div class="card">
+      <div class="options-row">
+        <div class="form-group">
+          <label>Tipo de CNPJ</label>
+          <div class="toggle-group">
+            <button [class.active]="mode() === 'normal'" (click)="mode.set('normal')">Normal</button>
+            <button [class.active]="mode() === 'alfanumerico'" (click)="mode.set('alfanumerico')">Alfanumérico</button>
+          </div>
         </div>
 
-        @if (mode() === 'alfanumerico') {
-          <div class="info-note">
-            <span class="ph ph-info"></span>
-            CNPJ alfanumérico: os primeiros 8 caracteres podem conter letras e números (nova regra Receita Federal — vigência a partir de 2026).
+        <div class="form-group">
+          <label>Formato</label>
+          <div class="toggle-group">
+            <button [class.active]="withMask()" (click)="withMask.set(true)">Com pontuação</button>
+            <button [class.active]="!withMask()" (click)="withMask.set(false)">Sem pontuação</button>
           </div>
-        }
-
-        <po-divider p-label="Gerar"></po-divider>
-
-        <div class="generate-row">
-          <po-input p-label="Quantidade" [(ngModel)]="quantity" p-type="number" p-min="1" p-max="50" style="width:140px"></po-input>
-          <po-button p-label="Gerar" p-icon="ph ph-arrows-clockwise" p-kind="primary" (p-click)="generate()"></po-button>
         </div>
+      </div>
 
-        @if (results().length > 0) {
-          <po-divider [p-label]="'Resultados (' + results().length + ')'"></po-divider>
-          <div class="panel-header">
-            <span></span>
-            <po-button p-label="Copiar todos" p-icon="ph ph-copy" p-kind="secondary" p-size="small" (p-click)="copyAll()"></po-button>
+      @if (mode() === 'alfanumerico') {
+        <div class="info-note fade-in">
+          <span class="material-icons-round">info</span>
+          CNPJ alfanumérico: os primeiros 8 caracteres podem conter letras e números (nova regra da Receita Federal — vigência a partir de 2026).
+        </div>
+      }
+
+      <div class="divider"></div>
+
+      <div class="quantity-row">
+        <div class="form-group">
+          <label>Quantidade</label>
+          <input type="number" class="form-control qty-input" [(ngModel)]="quantity" min="1" max="50">
+        </div>
+        <button class="btn btn-primary" (click)="generate()">
+          <span class="material-icons-round">refresh</span>
+          Gerar
+        </button>
+      </div>
+
+      @if (results().length > 0) {
+        <div class="results fade-in">
+          <div class="results-header">
+            <span class="section-title">Resultados ({{ results().length }})</span>
+            <button class="btn btn-secondary btn-sm" (click)="copyAll()">
+              <span class="material-icons-round">content_copy</span>
+              Copiar todos
+            </button>
           </div>
-          <div class="result-list">
+
+          <div class="results-list">
             @for (cnpj of results(); track cnpj; let i = $index) {
               <div class="result-row">
                 <span class="result-index">{{ i + 1 }}</span>
-                <span class="result-value result-mono">{{ cnpj }}</span>
-                <po-button [p-icon]="copiedIndex() === i ? 'ph ph-check' : 'ph ph-copy'"
-                  p-kind="secondary" p-size="small" (p-click)="copySingle(cnpj, i)">
-                </po-button>
+                <span class="result-value">{{ cnpj }}</span>
+                <button class="btn btn-icon btn-secondary" (click)="copySingle(cnpj, i)" title="Copiar">
+                  <span class="material-icons-round">{{ copiedIndex() === i ? 'check' : 'content_copy' }}</span>
+                </button>
               </div>
             }
           </div>
-        }
-      </po-container>
 
-      <po-container [p-no-border]="true">
-        <p style="font-size:13px;color:var(--color-neutral-mid-60)">
-          Os CNPJs são gerados com dígitos verificadores calculados conforme o algoritmo oficial da Receita Federal, sendo válidos para uso em ambientes de teste. <strong>Não use em produção.</strong>
-        </p>
-      </po-container>
-    </po-page-default>
+          @if (allCopied()) {
+            <div class="copied-hint">Todos os CNPJs copiados!</div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="card info-card">
+      <h3>Como funciona</h3>
+      <p>Os CNPJs são gerados com dígitos verificadores calculados conforme o algoritmo oficial da Receita Federal, sendo válidos para uso em ambientes de teste. <strong>Não use em produção.</strong></p>
+    </div>
   `,
-  styles: [`.options-row{display:flex;flex-wrap:wrap;gap:24px} .generate-row{display:flex;align-items:flex-end;gap:12px}`]
+  styles: [`
+    .options-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .info-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #92400e;
+      margin-top: 16px;
+
+      .material-icons-round { font-size: 16px !important; flex-shrink: 0; margin-top: 1px; }
+    }
+
+    .quantity-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+
+      .qty-input {
+        width: 90px;
+      }
+    }
+
+    .results {
+      margin-top: 20px;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .results-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color .2s;
+
+      &:hover { border-color: var(--primary); }
+
+      .result-index {
+        font-size: 12px;
+        color: var(--text-muted);
+        width: 20px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      .result-value {
+        flex: 1;
+        font-family: 'Courier New', monospace;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--primary-dark);
+        letter-spacing: .5px;
+      }
+    }
+
+    .info-card {
+      margin-top: 16px;
+      background: var(--surface-2);
+
+      h3 { font-size: 14px; margin-bottom: 6px; }
+      p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    }
+  `]
 })
 export class CnpjGeneratorComponent {
   mode = signal<CnpjMode>('normal');
-  withMask = signal<string>('with');
+  withMask = signal(true);
   quantity = 5;
   results = signal<string[]>([]);
   copiedIndex = signal(-1);
-
-  modeOptions: PoRadioGroupOption[] = [
-    { label: 'Normal',       value: 'normal' },
-    { label: 'Alfanumérico', value: 'alfanumerico' }
-  ];
-
-  maskOptions: PoRadioGroupOption[] = [
-    { label: 'Com pontuação', value: 'with' },
-    { label: 'Sem pontuação', value: 'without' }
-  ];
-
-  constructor(private notification: PoNotificationService) {}
+  allCopied = signal(false);
 
   generate(): void {
     const list: string[] = [];
@@ -96,25 +190,26 @@ export class CnpjGeneratorComponent {
     }
     this.results.set(list);
     this.copiedIndex.set(-1);
+    this.allCopied.set(false);
   }
-
-  private get useMask() { return this.withMask() === 'with'; }
 
   private generateNormal(): string {
     const nums = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10));
     nums.push(this.calcDigit(nums, [5,4,3,2,9,8,7,6,5,4,3,2]));
     nums.push(this.calcDigit(nums, [6,5,4,3,2,9,8,7,6,5,4,3,2]));
     const raw = nums.join('');
-    return this.useMask ? this.applyMask(raw) : raw;
+    return this.withMask() ? this.maskNormal(raw) : raw;
   }
 
   private generateAlfanumerico(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const base = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]);
-    base.push(String(this.calcDigitAlfa(base, [5,4,3,2,9,8,7,6,5,4,3,2])));
-    base.push(String(this.calcDigitAlfa(base, [6,5,4,3,2,9,8,7,6,5,4,3,2])));
+    const d1 = this.calcDigitAlfa(base, [5,4,3,2,9,8,7,6,5,4,3,2]);
+    base.push(String(d1));
+    const d2 = this.calcDigitAlfa(base, [6,5,4,3,2,9,8,7,6,5,4,3,2]);
+    base.push(String(d2));
     const raw = base.join('');
-    return this.useMask ? this.applyMask(raw) : raw;
+    return this.withMask() ? this.maskNormal(raw) : raw;
   }
 
   private calcDigit(nums: number[], weights: number[]): number {
@@ -132,19 +227,19 @@ export class CnpjGeneratorComponent {
     return rem < 2 ? 0 : 11 - rem;
   }
 
-  private applyMask(raw: string): string {
+  private maskNormal(raw: string): string {
     return `${raw.slice(0,2)}.${raw.slice(2,5)}.${raw.slice(5,8)}/${raw.slice(8,12)}-${raw.slice(12,14)}`;
   }
 
   copySingle(value: string, index: number): void {
     navigator.clipboard.writeText(value);
     this.copiedIndex.set(index);
-    this.notification.success({ message: 'CNPJ copiado!', duration: 2000 });
     setTimeout(() => this.copiedIndex.set(-1), 1500);
   }
 
   copyAll(): void {
     navigator.clipboard.writeText(this.results().join('\n'));
-    this.notification.success({ message: `${this.results().length} CNPJs copiados!`, duration: 2000 });
+    this.allCopied.set(true);
+    setTimeout(() => this.allCopied.set(false), 2000);
   }
 }
