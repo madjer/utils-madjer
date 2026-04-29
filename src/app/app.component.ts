@@ -1,15 +1,17 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { PoMenuModule, PoToolbarModule, PoMenuItem } from '@po-ui/ng-components';
+import { PoMenuModule, PoNavbarModule, PoMenuItem } from '@po-ui/ng-components';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, PoMenuModule, PoToolbarModule],
+  imports: [RouterOutlet, PoMenuModule, PoNavbarModule],
   template: `
-    <po-toolbar p-title="Utilitários Madjer"></po-toolbar>
-    <po-menu [p-menus]="menus" p-logo="logo.svg" p-short-logo="logo.svg"></po-menu>
-    <router-outlet></router-outlet>
+    <po-navbar p-logo="logo.svg"></po-navbar>
+    <div class="po-wrapper">
+      <po-menu [p-menus]="menus" p-short-logo="logo.svg"></po-menu>
+      <router-outlet></router-outlet>
+    </div>
   `
 })
 export class AppComponent {
