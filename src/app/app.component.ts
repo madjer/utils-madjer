@@ -1,103 +1,24 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { SidebarComponent } from './layout/sidebar.component';
-import { CommonModule } from '@angular/common';
+import { PoMenuModule, PoToolbarModule, PoMenuItem } from '@po-ui/ng-components';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, CommonModule],
+  imports: [RouterOutlet, PoMenuModule, PoToolbarModule],
   template: `
-    <div class="app-shell">
-      <app-sidebar [open]="sidebarOpen()" (close)="sidebarOpen.set(false)" />
-
-      <div class="main-area" [class.sidebar-open]="sidebarOpen()">
-        <header class="top-bar">
-          <button class="hamburger btn btn-icon" (click)="sidebarOpen.set(!sidebarOpen())" title="Menu">
-            <span class="material-icons-round">menu</span>
-          </button>
-          <img src="logo.svg" alt="M" class="top-bar-logo">
-          <span class="top-bar-title">Utilitários Madjer</span>
-        </header>
-
-        <main class="page-content">
-          <router-outlet />
-        </main>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .app-shell {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .main-area {
-      flex: 1;
-      margin-left: var(--sidebar-width);
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      transition: margin .3s cubic-bezier(.4,0,.2,1);
-
-      @media (max-width: 768px) {
-        margin-left: 0;
-      }
-    }
-
-    .top-bar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      height: var(--header-height);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      gap: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.05);
-
-      .hamburger {
-        display: none;
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        &:hover { background: var(--surface-3); color: var(--text-primary); }
-
-        @media (max-width: 768px) { display: flex; }
-      }
-
-      .top-bar-logo {
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
-        display: none;
-
-        @media (max-width: 768px) { display: block; }
-      }
-
-      .top-bar-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--primary);
-        letter-spacing: -.2px;
-      }
-    }
-
-    .page-content {
-      flex: 1;
-      padding: 32px;
-      max-width: 900px;
-      width: 100%;
-      margin: 0 auto;
-
-      @media (max-width: 768px) {
-        padding: 20px 16px;
-      }
-    }
-  `]
+    <po-toolbar p-title="Utilitários Madjer"></po-toolbar>
+    <po-menu [p-menus]="menus" p-logo="logo.svg" p-short-logo="logo.svg"></po-menu>
+    <router-outlet></router-outlet>
+  `
 })
 export class AppComponent {
-  sidebarOpen = signal(false);
+  menus: PoMenuItem[] = [
+    { label: 'Início',              link: '/',         icon: 'ph ph-house',     shortLabel: 'Início'  },
+    { label: 'Gerador de CNPJ',     link: '/cnpj',     icon: 'ph ph-buildings', shortLabel: 'CNPJ'    },
+    { label: 'Gerador de CPF',      link: '/cpf',      icon: 'ph ph-user',      shortLabel: 'CPF'     },
+    { label: 'Formatador de XML',   link: '/xml',      icon: 'ph ph-code',      shortLabel: 'XML'     },
+    { label: 'Markdown Viewer',     link: '/markdown', icon: 'ph ph-article',   shortLabel: 'MD'      },
+    { label: 'Formatador de Texto', link: '/text',     icon: 'ph ph-text-t',    shortLabel: 'Texto'   },
+  ];
 }
