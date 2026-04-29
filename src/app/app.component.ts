@@ -16,6 +16,7 @@ import { CommonModule } from '@angular/common';
           <button class="hamburger btn btn-icon" (click)="sidebarOpen.set(!sidebarOpen())" title="Menu">
             <span class="material-icons-round">menu</span>
           </button>
+          <img src="logo.svg" alt="M" class="top-bar-logo">
           <span class="top-bar-title">Utilitários Madjer</span>
         </header>
 
@@ -65,6 +66,15 @@ import { CommonModule } from '@angular/common';
         &:hover { background: var(--surface-3); color: var(--text-primary); }
 
         @media (max-width: 768px) { display: flex; }
+      }
+
+      .top-bar-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        display: none;
+
+        @media (max-width: 768px) { display: block; }
       }
 
       .top-bar-title {

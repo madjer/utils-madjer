@@ -16,7 +16,7 @@ interface NavItem {
   template: `
     <aside class="sidebar" [class.open]="open">
       <div class="sidebar-brand">
-        <span class="brand-icon">⚡</span>
+        <img src="logo.svg" alt="Madjer" class="brand-logo">
         <div class="brand-text">
           <span class="brand-name">Utilitários</span>
           <span class="brand-sub">Madjer</span>
@@ -69,9 +69,11 @@ interface NavItem {
       padding: 18px 20px;
       border-bottom: 1px solid var(--border);
 
-      .brand-icon {
-        font-size: 26px;
-        line-height: 1;
+      .brand-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        flex-shrink: 0;
       }
 
       .brand-text {
