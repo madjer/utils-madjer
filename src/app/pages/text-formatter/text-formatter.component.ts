@@ -1,434 +1,220 @@
 import { Component, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Transformation {
-  id: string;
-  label: string;
-  description: string;
-  enabled: boolean;
-  group: string;
-  exclusive?: string[];
-}
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-text-formatter',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule,
+            MatCheckboxModule, MatFormFieldModule, MatInputModule, MatIconModule,
+            MatChipsModule, MatDividerModule],
+  providers: [MatSnackBar],
   template: `
-    <div class="page-header">
-      <h1>Formatador de Texto</h1>
-      <p>Cole um texto, selecione as transformações desejadas e veja o resultado em tempo real.</p>
-    </div>
+    <h1 class="page-title">Formatador de Texto</h1>
+    <p class="page-subtitle">Cole um texto, selecione as transformações e veja o resultado em tempo real.</p>
 
     <div class="formatter-layout">
-      <div class="side-panel">
-        <div class="card options-card">
-          <span class="section-title">Transformações</span>
-
-          @for (group of groups; track group) {
-            <div class="option-group">
-              <span class="group-label">{{ group }}</span>
-              @for (def of defsByGroup(group); track def.id) {
-                <label class="option-item" [class.disabled]="isDisabled(def)" (click)="!isDisabled(def) && toggle(def)">
-                  <input
-                    type="checkbox"
-                    [checked]="isEnabled(def.id)"
-                    [disabled]="isDisabled(def)"
-                    (click)="$event.stopPropagation()"
-                    (change)="toggle(def)"
-                  >
-                  <div class="option-text">
-                    <span class="option-label">{{ def.label }}</span>
-                    <span class="option-desc">{{ def.description }}</span>
-                  </div>
-                </label>
+      <!-- Options panel -->
+      <div class="options-sticky">
+        <mat-card>
+          <mat-card-header><mat-card-title>Transformações</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <p class="option-group-label">Capitalização</p>
+            <mat-button-toggle-group [ngModel]="capitalization()" (ngModelChange)="capitalization.set($event)"
+              style="flex-direction:column;width:100%;align-items:stretch">
+              @for (opt of capitalizationOptions; track opt.value) {
+                <mat-button-toggle [value]="opt.value" style="text-align:left">{{ opt.label }}</mat-button-toggle>
               }
-            </div>
-          }
+            </mat-button-toggle-group>
 
-          <div class="divider"></div>
-          <button class="btn btn-secondary btn-sm" style="width:100%" (click)="resetAll()">
-            <span class="material-icons-round">restart_alt</span>
-            Limpar seleções
-          </button>
-        </div>
+            <mat-divider style="margin: 16px 0"></mat-divider>
+            <p class="option-group-label">Espaços e Linhas</p>
+            @for (opt of spaceOptions; track opt.value) {
+              <mat-checkbox [checked]="selectedSpaces().includes(opt.value)"
+                (change)="toggleSpace(opt.value, $event.checked)">
+                {{ opt.label }}
+              </mat-checkbox>
+            }
+
+            <mat-divider style="margin: 16px 0"></mat-divider>
+            <p class="option-group-label">Caracteres</p>
+            @for (opt of charOptions; track opt.value) {
+              <mat-checkbox [checked]="selectedChars().includes(opt.value)"
+                (change)="toggleChar(opt.value, $event.checked)">
+                {{ opt.label }}
+              </mat-checkbox>
+            }
+
+            <mat-divider style="margin: 16px 0"></mat-divider>
+            <button mat-stroked-button style="width:100%" (click)="resetAll()">
+              <mat-icon>restart_alt</mat-icon> Limpar seleções
+            </button>
+          </mat-card-content>
+        </mat-card>
       </div>
 
+      <!-- Main panel -->
       <div class="main-panel">
-        <div class="card input-card">
-          <div class="panel-header">
-            <span class="section-title">Texto de entrada</span>
-            <div class="panel-actions">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Texto de entrada</mat-card-title>
+            <div class="header-actions">
               <span class="char-badge">{{ inputText().length }} chars</span>
-              <button class="btn btn-secondary btn-sm" (click)="clear()" [disabled]="!inputText()">
-                <span class="material-icons-round">clear</span>
-                Limpar
+              <button mat-icon-button (click)="inputText.set('')" [disabled]="!inputText()">
+                <mat-icon>clear</mat-icon>
               </button>
             </div>
-          </div>
-          <textarea
-            class="form-control text-area"
-            [ngModel]="inputText()"
-            (ngModelChange)="inputText.set($event)"
-            placeholder="Cole seu texto aqui..."
-            spellcheck="false"
-          ></textarea>
-        </div>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field appearance="outline" style="width:100%">
+              <textarea matInput [ngModel]="inputText()" (ngModelChange)="inputText.set($event)"
+                placeholder="Cole seu texto aqui..." [rows]="8" spellcheck="false">
+              </textarea>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
 
         @if (activeCount() > 0) {
-          <div class="active-chips fade-in">
-            @for (def of activeTransformations(); track def.id) {
-              <span class="chip">
-                <span class="material-icons-round">check</span>
-                {{ def.label }}
-                <button (click)="toggle(def)">
-                  <span class="material-icons-round">close</span>
-                </button>
-              </span>
+          <mat-chip-set class="active-chips">
+            @for (label of activeLabels(); track label) {
+              <mat-chip>{{ label }}</mat-chip>
             }
-          </div>
+          </mat-chip-set>
         }
 
-        <div class="card output-card">
-          <div class="panel-header">
-            <span class="section-title">Resultado</span>
-            <div class="panel-actions">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Resultado</mat-card-title>
+            <div class="header-actions">
               <span class="char-badge">{{ outputText().length }} chars</span>
               @if (outputText()) {
-                <button class="btn btn-secondary btn-sm" (click)="copyOutput()">
-                  <span class="material-icons-round">{{ copied() ? 'check' : 'content_copy' }}</span>
-                  {{ copied() ? 'Copiado!' : 'Copiar' }}
-                </button>
+                <button mat-icon-button (click)="copyOutput()"><mat-icon>content_copy</mat-icon></button>
               }
             </div>
-          </div>
-
-          @if (outputText()) {
-            <pre class="output-pre fade-in">{{ outputText() }}</pre>
-          } @else if (inputText()) {
-            <div class="empty-state">
-              <span class="material-icons-round">tune</span>
-              <p>Selecione ao menos uma transformação</p>
-            </div>
-          } @else {
-            <div class="empty-state">
-              <span class="material-icons-round">text_fields</span>
-              <p>O resultado aparecerá aqui</p>
-            </div>
-          }
-        </div>
+          </mat-card-header>
+          <mat-card-content>
+            @if (outputText()) {
+              <pre class="output-pre output-pre-wrap">{{ outputText() }}</pre>
+            } @else if (inputText()) {
+              <div class="empty-state">
+                <mat-icon>tune</mat-icon>
+                <p>Selecione ao menos uma transformação</p>
+              </div>
+            } @else {
+              <div class="empty-state">
+                <mat-icon>text_fields</mat-icon>
+                <p>O resultado aparecerá aqui</p>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
       </div>
     </div>
   `,
   styles: [`
-    .formatter-layout {
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 16px;
-      align-items: start;
-
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .options-card {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      position: sticky;
-      top: calc(var(--header-height) + 16px);
-    }
-
-    .option-group {
-      margin-top: 12px;
-    }
-
-    .group-label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      margin-bottom: 6px;
-      padding: 0 4px;
-    }
-
-    .option-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 9px;
-      padding: 8px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: background .15s;
-
-      &:hover:not(.disabled) { background: var(--surface-3); }
-
-      &.disabled {
-        opacity: .4;
-        cursor: not-allowed;
-      }
-
-      input[type="checkbox"] {
-        margin-top: 2px;
-        width: 15px;
-        height: 15px;
-        accent-color: var(--primary);
-        flex-shrink: 0;
-        cursor: pointer;
-      }
-
-      .option-text {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-
-      .option-label {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--text-primary);
-        line-height: 1.3;
-      }
-
-      .option-desc {
-        font-size: 11px;
-        color: var(--text-muted);
-        line-height: 1.3;
-      }
-    }
-
-    .main-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      gap: 8px;
-    }
-
-    .panel-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .char-badge {
-      font-size: 11px;
-      color: var(--text-muted);
-      background: var(--surface-3);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 2px 8px;
-    }
-
-    .text-area {
-      min-height: 200px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .active-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--primary-light);
-      color: var(--primary-dark);
-      border: 1px solid #c7d2fe;
-      border-radius: 20px;
-      padding: 3px 8px 3px 6px;
-      font-size: 12px;
-      font-weight: 500;
-
-      .material-icons-round { font-size: 13px !important; }
-
-      button {
-        background: none;
-        border: none;
-        color: var(--primary-dark);
-        opacity: .6;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        &:hover { opacity: 1; }
-        .material-icons-round { font-size: 13px !important; }
-      }
-    }
-
-    .output-card {
-      min-height: 160px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .output-pre {
-      flex: 1;
-      background: var(--surface-3);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px;
-      margin: 0;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: var(--text-primary);
-      max-height: 360px;
-      overflow-y: auto;
-    }
-
-    .empty-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 32px;
-      color: var(--text-muted);
-
-      .material-icons-round { font-size: 36px !important; opacity: .3; }
-      p { font-size: 13px; }
-    }
+    .page-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; color: var(--mat-sys-on-surface); }
+    .option-group-label { font-size: 11px; font-weight: 700; color: var(--mat-sys-on-surface-variant); text-transform: uppercase; letter-spacing: .6px; margin: 0 0 8px; }
+    .header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .char-badge { font-size: 11px; color: var(--mat-sys-on-surface-variant); background: var(--mat-sys-surface-container); border: 1px solid var(--mat-sys-outline-variant); border-radius: 20px; padding: 2px 8px; }
+    mat-checkbox { display: flex; margin: 2px 0; }
+    .main-panel { display: flex; flex-direction: column; gap: 12px; }
   `]
 })
 export class TextFormatterComponent {
   inputText = signal('');
-  copied = signal(false);
+  capitalization = signal('');
+  selectedSpaces = signal<string[]>([]);
+  selectedChars = signal<string[]>([]);
 
-  // Signal com o Set de IDs ativos — única fonte de verdade reativa
-  enabledIds = signal<Set<string>>(new Set());
-
-  readonly DEFS: Omit<Transformation, 'enabled'>[] = [
-    { id: 'upper',              label: 'UPPER CASE',                description: 'Tudo em maiúsculas',                  group: 'Capitalização',    exclusive: ['lower', 'capitalize', 'sentence'] },
-    { id: 'lower',              label: 'lower case',                description: 'Tudo em minúsculas',                  group: 'Capitalização',    exclusive: ['upper', 'capitalize', 'sentence'] },
-    { id: 'capitalize',         label: 'Capitalize Words',          description: 'Primeira letra de cada palavra',      group: 'Capitalização',    exclusive: ['upper', 'lower', 'sentence'] },
-    { id: 'sentence',           label: 'Sentence case',             description: 'Primeira letra de cada frase',        group: 'Capitalização',    exclusive: ['upper', 'lower', 'capitalize'] },
-    { id: 'trim',               label: 'Remover espaços nas bordas',description: 'Trim em cada linha',                  group: 'Espaços e linhas' },
-    { id: 'remove_extra_spaces',label: 'Remover espaços duplos',    description: 'Normaliza múltiplos espaços em um',   group: 'Espaços e linhas' },
-    { id: 'remove_newlines',    label: 'Remover quebras de linha',  description: 'Une todo o texto em uma linha',       group: 'Espaços e linhas' },
-    { id: 'remove_empty_lines', label: 'Remover linhas vazias',     description: 'Elimina linhas em branco',            group: 'Espaços e linhas' },
-    { id: 'sort_lines',         label: 'Ordenar linhas (A → Z)',    description: 'Ordena linhas alfabeticamente',       group: 'Espaços e linhas' },
-    { id: 'dedupe_lines',       label: 'Remover linhas duplicadas', description: 'Mantém apenas linhas únicas',         group: 'Espaços e linhas' },
-    { id: 'remove_accents',     label: 'Remover acentos',           description: 'ã→a, é→e, ç→c, etc.',               group: 'Caracteres' },
-    { id: 'remove_special',     label: 'Remover caracteres especiais', description: 'Mantém letras, números e espaços', group: 'Caracteres' },
-    { id: 'remove_numbers',     label: 'Remover números',           description: 'Remove dígitos 0–9',                 group: 'Caracteres' },
-    { id: 'remove_punctuation', label: 'Remover pontuação',         description: "Remove . , ; : ! ? \" ' ( )",       group: 'Caracteres' },
+  capitalizationOptions = [
+    { label: 'UPPER CASE',       value: 'upper' },
+    { label: 'lower case',       value: 'lower' },
+    { label: 'Capitalize Words', value: 'capitalize' },
+    { label: 'Sentence case',    value: 'sentence' },
   ];
 
-  groups = [...new Set(this.DEFS.map(t => t.group))];
+  spaceOptions = [
+    { label: 'Remover espaços nas bordas',  value: 'trim' },
+    { label: 'Remover espaços duplos',      value: 'remove_extra_spaces' },
+    { label: 'Remover quebras de linha',    value: 'remove_newlines' },
+    { label: 'Remover linhas vazias',       value: 'remove_empty_lines' },
+    { label: 'Ordenar linhas (A → Z)',      value: 'sort_lines' },
+    { label: 'Remover linhas duplicadas',   value: 'dedupe_lines' },
+  ];
 
-  defsByGroup(group: string) {
-    return this.DEFS.filter(t => t.group === group);
-  }
+  charOptions = [
+    { label: 'Remover acentos',              value: 'remove_accents' },
+    { label: 'Remover caracteres especiais', value: 'remove_special' },
+    { label: 'Remover números',              value: 'remove_numbers' },
+    { label: 'Remover pontuação',            value: 'remove_punctuation' },
+  ];
 
-  isEnabled(id: string) { return this.enabledIds().has(id); }
-
-  isDisabled(def: Omit<Transformation, 'enabled'>): boolean {
-    if (!def.exclusive?.length) return false;
-    return def.exclusive.some(id => this.enabledIds().has(id));
-  }
-
-  toggle(def: Omit<Transformation, 'enabled'>): void {
-    const next = new Set(this.enabledIds());
-    if (next.has(def.id)) {
-      next.delete(def.id);
-    } else {
-      def.exclusive?.forEach(id => next.delete(id));
-      next.add(def.id);
-    }
-    this.enabledIds.set(next);
-  }
-
-  activeCount = computed(() => this.enabledIds().size);
-
-  activeTransformations = computed(() =>
-    this.DEFS.filter(d => this.enabledIds().has(d.id))
+  activeCount = computed(() =>
+    (this.capitalization() ? 1 : 0) + this.selectedSpaces().length + this.selectedChars().length
   );
 
-  outputText = computed(() => {
-    const input = this.inputText();
-    if (!input || this.activeCount() === 0) return '';
-    return this.applyTransformations(input);
+  activeLabels = computed((): string[] => {
+    const labels: string[] = [];
+    if (this.capitalization()) {
+      const opt = this.capitalizationOptions.find(o => o.value === this.capitalization());
+      if (opt) labels.push(opt.label);
+    }
+    [...this.selectedSpaces(), ...this.selectedChars()].forEach(v => {
+      const opt = [...this.spaceOptions, ...this.charOptions].find(o => o.value === v);
+      if (opt) labels.push(opt.label);
+    });
+    return labels;
   });
 
+  outputText = computed(() => {
+    if (!this.inputText() || this.activeCount() === 0) return '';
+    return this.applyTransformations(this.inputText());
+  });
+
+  constructor(private snackBar: MatSnackBar) {}
+
+  toggleSpace(value: string, checked: boolean): void {
+    this.selectedSpaces.update(arr => checked ? [...arr, value] : arr.filter(v => v !== value));
+  }
+
+  toggleChar(value: string, checked: boolean): void {
+    this.selectedChars.update(arr => checked ? [...arr, value] : arr.filter(v => v !== value));
+  }
+
   private applyTransformations(text: string): string {
-    let result = text;
-    const active = this.enabledIds();
-
-    if (active.has('trim')) {
-      result = result.split('\n').map(l => l.trim()).join('\n');
-    }
-    if (active.has('remove_extra_spaces')) {
-      result = result.replace(/ {2,}/g, ' ');
-    }
-    if (active.has('remove_empty_lines')) {
-      result = result.split('\n').filter(l => l.trim() !== '').join('\n');
-    }
-    if (active.has('remove_newlines')) {
-      result = result.replace(/\r?\n/g, ' ').replace(/ {2,}/g, ' ').trim();
-    }
-    if (active.has('sort_lines')) {
-      result = result.split('\n').sort((a, b) => a.localeCompare(b, 'pt')).join('\n');
-    }
-    if (active.has('dedupe_lines')) {
-      result = [...new Set(result.split('\n'))].join('\n');
-    }
-    if (active.has('remove_accents')) {
-      result = result.normalize('NFD').replace(/[̀-ͯ]/g, '');
-    }
-    if (active.has('remove_punctuation')) {
-      result = result.replace(/[.,;:!?"'()\[\]{}\-–—]/g, '');
-    }
-    if (active.has('remove_special')) {
-      result = result.replace(/[^a-zA-ZÀ-ÿ0-9 \n\r\t]/g, '');
-    }
-    if (active.has('remove_numbers')) {
-      result = result.replace(/[0-9]/g, '');
-    }
-    if (active.has('upper')) {
-      result = result.toLocaleUpperCase('pt-BR');
-    } else if (active.has('lower')) {
-      result = result.toLocaleLowerCase('pt-BR');
-    } else if (active.has('capitalize')) {
-      result = result.replace(/\b\w/g, c => c.toLocaleUpperCase('pt-BR'));
-    } else if (active.has('sentence')) {
-      result = result.replace(/(^\s*\w|[.!?]\s+\w)/g, c => c.toLocaleUpperCase('pt-BR'));
-    }
-
-    return result;
+    let r = text;
+    const active = new Set([...this.selectedSpaces(), ...this.selectedChars()]);
+    if (active.has('trim'))                r = r.split('\n').map(l => l.trim()).join('\n');
+    if (active.has('remove_extra_spaces')) r = r.replace(/ {2,}/g, ' ');
+    if (active.has('remove_empty_lines'))  r = r.split('\n').filter(l => l.trim() !== '').join('\n');
+    if (active.has('remove_newlines'))     r = r.replace(/\r?\n/g, ' ').replace(/ {2,}/g, ' ').trim();
+    if (active.has('sort_lines'))          r = r.split('\n').sort((a, b) => a.localeCompare(b, 'pt')).join('\n');
+    if (active.has('dedupe_lines'))        r = [...new Set(r.split('\n'))].join('\n');
+    if (active.has('remove_accents'))      r = r.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (active.has('remove_punctuation'))  r = r.replace(/[.,;:!?"'()\[\]{}\-–—]/g, '');
+    if (active.has('remove_special'))      r = r.replace(/[^a-zA-ZÀ-ÿ0-9 \n\r\t]/g, '');
+    if (active.has('remove_numbers'))      r = r.replace(/[0-9]/g, '');
+    const cap = this.capitalization();
+    if (cap === 'upper')      r = r.toLocaleUpperCase('pt-BR');
+    else if (cap === 'lower') r = r.toLocaleLowerCase('pt-BR');
+    else if (cap === 'capitalize') r = r.replace(/\b\w/g, c => c.toLocaleUpperCase('pt-BR'));
+    else if (cap === 'sentence')   r = r.replace(/(^\s*\w|[.!?]\s+\w)/g, c => c.toLocaleUpperCase('pt-BR'));
+    return r;
   }
 
   copyOutput(): void {
-    const text = this.outputText();
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    this.copied.set(true);
-    setTimeout(() => this.copied.set(false), 1500);
+    navigator.clipboard.writeText(this.outputText());
+    this.snackBar.open('Texto copiado!', '', { duration: 2000 });
   }
 
-  clear(): void {
-    this.inputText.set('');
-  }
-
-  resetAll(): void {
-    this.enabledIds.set(new Set());
-  }
+  resetAll(): void { this.capitalization.set(''); this.selectedSpaces.set([]); this.selectedChars.set([]); }
 }
