@@ -2,46 +2,151 @@
 
 Ferramentas práticas para desenvolvedores — sem login, direto ao ponto.
 
-**Acesse:** [util.madjer.com.br](https://util.madjer.com.br)
+**Acesse:** [madjer-utils.web.app](https://madjer-utils.web.app)
 
-## Funcionalidades
+---
 
-### 🏢 Gerador de CNPJ
+## 🛠 Ferramentas
+
+### 🔵 Geradores
+
+#### 🏢 Gerador de CNPJ
 - Formato **normal** ou **alfanumérico** (nova regra Receita Federal 2026)
 - Com ou sem pontuação
-- Gere até 50 CNPJs de uma vez
-- Copiar individual ou todos de uma vez
+- Gere até 50 CNPJs de uma vez; copie individual ou todos
 
-### 👤 Gerador de CPF
-- Com ou sem máscara
+#### 👤 Gerador de CPF
 - Dígitos verificadores calculados pelo algoritmo Módulo 11
-- Gere até 50 CPFs de uma vez
+- Com ou sem máscara; gere até 50 de uma vez
 
-### 📄 Formatador de XML
-- Indentação automática com parse via `DOMParser`
-- Modo **Escapado**: converte o XML para uso como string em propriedade JSON
-- Colar da área de transferência
+#### 🔑 Gerador de UUID
+- UUID v4 via `crypto.randomUUID()`
+- Opções: maiúsculas/minúsculas e com/sem hífens
+- Gere até 50 UUIDs; copie individual ou todos
 
-### 📝 Markdown Viewer
-- Preview em tempo real
+#### 🔒 Gerador de Senhas
+- Comprimento configurável de 4 a 128 caracteres via slider
+- Opções: maiúsculas, minúsculas, números, símbolos
+- Gere até 50 senhas; copie individual ou todas
+
+#### 🪪 Dados Fictícios
+- Gera dados brasileiros falsos para testes: nome completo, e-mail, CPF, telefone, endereço, data de nascimento
+- Exibe em tabela; exporta como JSON
+
+#### 📍 Consulta de CEP
+- Busca endereço completo via API [ViaCEP](https://viacep.com.br)
+- Auto-formatação do campo CEP
+- Copia resultado como JSON
+
+---
+
+### 🟡 Formatadores
+
+#### `{}` Formatador de JSON
+- Valida, indenta (pretty-print) ou minifica JSON
+- Destaca erros de sintaxe com mensagem
+
+#### 📄 Formatador de XML
+- Indentação automática via `DOMParser`
+- Modo **Escapado**: converte para uso como string em JSON
+
+#### 🗄 Formatador de SQL
+- Powered by [`sql-formatter`](https://github.com/sql-formatter-org/sql-formatter)
+- Dialetos: SQL, MySQL, PostgreSQL, SQLite, T-SQL, PL/SQL
+- Configuração de indentação (2 espaços, 4 espaços, tab)
+
+#### 🗜 Minificador CSS / JS
+- Remove espaços, quebras de linha e comentários
+- Exibe percentual de redução do tamanho
+- Modos: CSS e JavaScript
+
+#### 📝 Markdown Viewer
+- Preview em tempo real ao lado do editor
 - Suporte a tabelas, código, blockquotes, listas e mais
-- Copiar o HTML gerado
+- Copia o HTML gerado
 
-### 🔤 Formatador de Texto
-Transformações aplicáveis ao texto com preview em tempo real:
-
+#### 🔤 Formatador de Texto
 | Grupo | Transformações |
 |-------|---------------|
 | Capitalização | UPPER CASE, lower case, Capitalize Words, Sentence case |
-| Espaços e linhas | Remover espaços nas bordas, Remover espaços duplos, Remover quebras de linha, Remover linhas vazias, Ordenar linhas A→Z, Remover linhas duplicadas |
-| Caracteres | Remover acentos, Remover caracteres especiais, Remover números, Remover pontuação |
+| Espaços/linhas | Remover espaços extras, quebras de linha, linhas vazias, ordenar, remover duplicatas |
+| Caracteres | Remover acentos, especiais, números, pontuação |
+
+---
+
+### 🟢 Conversores
+
+#### 🔄 JSON ↔ XML
+- Converte JSON → XML e XML → JSON nos dois sentidos
+- Detecção automática de arrays e objetos aninhados
+
+#### 📊 JSON ↔ CSV
+- Converte array JSON para CSV e CSV para array JSON
+- Configuração de separador: vírgula, ponto-vírgula ou tab
+
+#### 🔐 Base64
+- Codifica e decodifica texto em Base64 (UTF-8 seguro)
+- Upload de arquivo → Base64 direto no navegador
+
+#### 📏 Conversor de Unidades
+| Categoria | Unidades |
+|-----------|---------|
+| Comprimento | mm, cm, m, km, in, ft, mi |
+| Peso | mg, g, kg, t, lb, oz |
+| Temperatura | °C, °F, K |
+| Dados | bit, B, KB, MB, GB, TB |
+| Tempo | ms, s, min, h, dia, semana |
+
+---
+
+### 🟠 Codificação
+
+#### 🔗 URL Encode / Decode
+- Codifica e decodifica strings via `encodeURIComponent` / `decodeURIComponent`
+
+#### `</>` HTML Entities
+- Codifica/decodifica entidades HTML (`&amp;`, `&lt;`, `&gt;`, etc.)
+- Tabela de referência com entidades comuns
+
+#### `#` Hash (SHA)
+- Gera SHA-1, SHA-256, SHA-384 e SHA-512 via `SubtleCrypto` (nativo do browser)
+- Sem envio de dados para servidor
+
+---
+
+### 🔴 Dev Tools
+
+#### ✅ Validador CPF / CNPJ
+- Valida dígitos verificadores (Módulo 11)
+- Auto-formatação do campo durante digitação
+- Validação em lote: cole vários em sequência
+
+#### 🗝 JWT Decoder
+- Decodifica header, payload e signature de tokens JWT
+- Indica se o token está expirado (`exp`)
+- Exibe datas `iat` e `exp` legíveis
+
+#### 💻 cURL → Código
+- Converte comandos cURL em:
+  - JavaScript com `fetch`
+  - JavaScript com `axios`
+  - Python com `requests`
+
+---
 
 ## Stack
 
-- **Angular 19** — standalone components, signals, lazy-loaded routes
-- **Firebase Hosting** — deploy e CDN
-- Sem dependências de UI framework (zero Angular Material)
-- Todas as operações são realizadas localmente no navegador
+| Tecnologia | Uso |
+|-----------|-----|
+| **Angular 19** | Framework (standalone components, signals, lazy routes) |
+| **Angular Material MDC** | UI components com tema M3 |
+| **sql-formatter** | Formatação de SQL |
+| **Firebase Hosting** | Deploy e CDN |
+
+- 5 paletas de cores + modo claro/escuro, persistidos em `localStorage`
+- Todas as operações são realizadas **localmente no navegador** — nenhum dado é enviado para servidores externos
+
+---
 
 ## Desenvolvimento
 
@@ -53,68 +158,11 @@ npm install
 ng serve
 
 # Build de produção
-ng build --configuration production
+ng build
 
 # Deploy no Firebase
 firebase deploy --only hosting
 ```
 
-## Projeto Firebase
-
-ID do projeto: `madjer-utils`
-
-## Development server
-
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+**Projeto Firebase:** `madjer-utils`  
+**Repositório:** [github.com/madjer/utils-madjer](https://github.com/madjer/utils-madjer)
